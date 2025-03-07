@@ -43,12 +43,14 @@ class WorkFlow:
 
     def run(self,input_data):
         for event in self.graph.stream(input_data, config=self.graph_config):
-            print(event)
+            # print(event)
+            return event
 
 
 if __name__ == '__main__':
     work_flow=WorkFlow()
-    input_data={'messages':'平均发射时长是什么？'}
+    input_data={'messages':'今天星期几'}
     # 频谱划分规定
-    work_flow.run(input_data)
+    response=work_flow.run(input_data)
+    print(response['judgement_chat']['messages'])
 

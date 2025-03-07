@@ -29,7 +29,6 @@ class Message(BaseModel):
 
 @app.post("/chat")
 async def chat(message: Message = Body(...)):
-    print(message.mes)
     work_flow = WorkFlow()
     input_data = {'messages': message.mes}
     # 频谱划分规定

@@ -45,11 +45,14 @@ class WorkFlow:
         for event in self.graph.stream(input_data, config=self.graph_config):
             # print(event)
             return event
+        # for msg, metadata in self.graph.stream(input_data, stream_mode="messages",config=self.graph_config):
+        #     print(msg)
 
 
 if __name__ == '__main__':
     work_flow=WorkFlow()
-    input_data={'messages':'今天星期几'}
+    input_data={'messages':'频谱划分规定'}
+    # input_data={'messages':'频段占用度判决门限是什么'}
     # 频谱划分规定
     response=work_flow.run(input_data)
     print(response['judgement_chat']['messages'])

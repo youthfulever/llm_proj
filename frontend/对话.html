@@ -145,53 +145,68 @@
 <body>
 <div id="app" v-cloak>
     <div class="content-container">
-        <!-- 添加标题 -->
         <div class="title-text">大模型的智能检索问答的频谱知识管理系统</div>
-        <!-- 图片 -->
         <img src="https://tse2-mm.cn.bing.net/th/id/OIP-C.kwe67ZMuwckeP13CfQ2cbAAAAA?rs=1&pid=ImgDetMain" alt="描述图片"/>
         <br />
-        <!-- 输入对话框气泡 -->
         <div class="input-bubble">
             <input type="text" v-model="inputValue"/>
-            <button @click="handleClick">发送</button> <!-- 发送按钮 -->
+            <button @click="sendMessage">发送</button>
             &nbsp;
-            <button @click="clearInput">清空</button> <!-- 清空按钮 -->
+            <button @click="clearInput">清空</button>
         </div>
-        <!-- 输出对话框 -->
         <div class="chat-bubble">{{ outputMessage }}</div>
     </div>
 </div>
 
 <script>
-    const { createApp, ref } = Vue;
+    const { createApp, ref, onMounted, onUnmounted } = Vue;
     const app = createApp({
         setup() {
+            let socket;
             const inputValue = ref('');
-            const outputMessage = ref(''); // 新增响应式变量
-            
-            const handleClick = () => {
-                axios.post('http://127.0.0.1:8000/chat', {
-                    mes: inputValue.value
-                })
-                .then(function (response) {
-                    console.log(response.data);
-                    outputMessage.value = '服务器回复：' + response.data.response;
-                })
-                .catch(function (error) {
-                    console.error(error);
-                    outputMessage.value = '发送失败，请检查网络连接或服务器状态';
-                });
+            const outputMessage = ref('');
+
+            const sendMessage = () => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({mes: inputValue.value}));
+                    inputValue.value = ''; // 清空输入框
+                }
             };
-            
+
             const clearInput = () => {
                 inputValue.value = '';
                 outputMessage.value = '';
             };
 
+            onMounted(() => {
+                socket = new WebSocket('ws://127.0.0.1:8000/chat');
+
+                socket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    outputMessage.value = '服务器回复：' + data.response;
+                };
+
+                socket.onopen = function(event) {
+                    console.log("WebSocket连接已建立");
+                };
+
+                socket.onclose = function(event) {
+                    console.log("WebSocket连接已关闭");
+                };
+
+                socket.onerror = function(error) {
+                    console.error("WebSocket错误: ", error);
+                };
+            });
+
+            onUnmounted(() => {
+                socket.close();
+            });
+
             return {
                 inputValue,
                 outputMessage,
-                handleClick,
+                sendMessage,
                 clearInput
             }
         }

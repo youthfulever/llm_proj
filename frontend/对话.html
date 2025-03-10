@@ -167,10 +167,19 @@
         .modal-content button:hover {
             background-color: #45a049;
         }
+        .username-display {
+            position: absolute;
+            top: 10px;
+            right: 100px; /* 调整位置在登录按钮左侧 */
+            padding: 10px 20px;
+            color: #333;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
 <div id="app" v-cloak>
+    <span class="username-display" v-if="isLoggedIn">{{ username }}</span>
     <button class="login-btn" @click="showModal = true">登录</button>
     <!-- 登录对话框 -->
     <div class="modal" v-if="showModal">
@@ -206,6 +215,7 @@
             const outputMessage = ref('');
             const username = ref('');
             const password = ref('');
+            const isLoggedIn = ref(false);
 
             const sendMessage = () => {
                 console.log('sendMessage 函数被调用');
@@ -230,6 +240,7 @@
                     if (response.data.success) {
                         alert('登录成功');
                         showModal.value = false;
+                        isLoggedIn.value = true;
                     } else {
                         alert('用户名或密码错误');
                     }
@@ -272,7 +283,8 @@
                 clearInput,
                 username,
                 password,
-                login
+                login,
+                isLoggedIn
             }
         }
     })

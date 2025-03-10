@@ -1,3 +1,4 @@
+import sqlite3
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -8,8 +9,36 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from backend.example_prompt import CHAT_JUDGMENT
 from backend.model import my_llm, get_vectors, MyEmbeddings
+from fastapi import Body
+from pydantic import BaseModel
 
-embeddings=MyEmbeddings('local')
+# 封装数据库初始化函数
+def init_db():
+    conn = sqlite3.connect('./db/users.db')
+    c = conn.cursor()
+    # 创建用户表（如果不存在）
+    c.execute('''CREATE TABLE IF NOT EXISTS users
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  username TEXT NOT NULL,
+                  password TEXT NOT NULL)''')
+    conn.commit()
+    # 插入初始用户（如果需要）
+    c.execute("SELECT COUNT(*) FROM users WHERE username = 'zhangsan'")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO users (username, password) VALUES ('zhangsan', '123456')")
+        conn.commit()
+    return conn
+
+def get_conn_cursor():
+    conn = sqlite3.connect('./db/users.db')
+    c = conn.cursor()
+    return c
+
+# 调用数据库初始化函数
+# conn = init_db()
+
+
+embeddings = MyEmbeddings('local')
 uri = "https://in03-c299f5d2a5e7139.serverless.gcp-us-west1.cloud.zilliz.com"
 token = "5dfe30212b118e9115e661dd5207b2e9a2539d052e5b661402f52a75847fc5d7889c43588cdbd8287be77129ff66256bfe341a0c"
 
@@ -36,26 +65,26 @@ def judgment_chat(user_query):
     prompt = ChatPromptTemplate.from_template(CHAT_JUDGMENT)
     # 创建链
     chain = prompt | my_llm
-    res=chain.invoke({"query": user_query}).content
+    res = chain.invoke({"query": user_query}).content
     return res
 
-def insert_qa(question,answer,source='null'):
+def insert_qa(question, answer, source='null'):
     document = Document(
         page_content=question,
-        metadata={"source": source,'question':question,'answer':answer},
+        metadata={"source": source, 'question': question, 'answer': answer},
     )
     vectorstore_qa.add_documents(documents=[document])
 
-def search_qa(query,threshold=0.7):
+def search_qa(query, threshold=0.7):
     results = vectorstore_qa.similarity_search_with_score(
         query,
         k=2,
     )
     if results:
         try:
-            res, score =results[0][0],results[0][1]
-            if score>threshold:
-                return {"question":res.metadata['question'],"answer":res.metadata['answer']}
+            res, score = results[0][0], results[0][1]
+            if score > threshold:
+                return {"question": res.metadata['question'], "answer": res.metadata['answer']}
         except:
             return
     return
@@ -67,7 +96,7 @@ def insert_knowledge(file_path):
     splits = text_splitter.split_documents(docs)
     vectorstore_knowledge.add_documents(documents=splits)
 
-def search_knowledge(query,threshold=0.7):
+def search_knowledge(query, threshold=0.7):
     results = vectorstore_knowledge.similarity_search_with_score(
         query,
         k=2,
@@ -102,8 +131,11 @@ def rag_service(query):
 
 
 
+
+
 if __name__ == "__main__":
+    init_db()
     # insert_knowledge("./data/test.pdf")
-    print(rag_service('频段占用度判决门限是什么'))
+    # print(rag_service('频段占用度判决门限是什么'))
     # insert_qa("频谱划分规定的网站去哪里查看？",
     #           "https://wap.miit.gov.cn/gyhxxhb/jgsj/cyzcyfgs/bmgz/wxdl/art/2023/art_1e98823e689f42ca9ed14dcb6feec07a.html")

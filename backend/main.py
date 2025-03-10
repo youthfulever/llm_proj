@@ -7,6 +7,8 @@ from fastapi import FastAPI, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.websockets import WebSocket
+
+from backend.utils_func import get_conn_cursor
 from backend.workflow.graph_engine import WorkFlow
 
 app = FastAPI()
@@ -63,7 +65,10 @@ class LoginRequest(BaseModel):
 # 新增登录验证接口
 @app.post("/login")
 async def login(login_request: LoginRequest = Body(...)):
-    if login_request.username == "zhangsan" and login_request.password == "123456":
+    c=get_conn_cursor()
+    c.execute("SELECT * FROM users WHERE username =? AND password =?", (login_request.username, login_request.password))
+    user = c.fetchone()
+    if user:
         return {"message": "登录成功", "success": True}
     else:
         return {"message": "用户名或密码错误", "success": False}

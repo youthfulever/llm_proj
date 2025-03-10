@@ -220,9 +220,23 @@
                 outputMessage.value = '';
             };
 
-            const login = () => {
-                console.log('login 函数被调用，用户名: ', username.value, ' 密码: ', password.value);
-                // 这里可以添加登录逻辑
+            const login = async () => {
+                try {
+                    const response = await axios.post('http://127.0.0.1:8000/login', {
+                        username: username.value,
+                        password: password.value
+                    });
+                    console.log(response.data);
+                    if (response.data.success) {
+                        alert('登录成功');
+                        showModal.value = false;
+                    } else {
+                        alert('用户名或密码错误');
+                    }
+                } catch (error) {
+                    console.error('登录请求出错:', error);
+                    alert('登录请求出错，请稍后重试');
+                }
             };
 
             onMounted(() => {

@@ -51,6 +51,22 @@
         .login-btn:hover {
             background-color: #45a049;
         }
+        /* 新增导入知识按钮样式 */
+        .import-btn {
+            position: absolute;
+            top: 70px; /* 调整此值来改变与登录按钮的间距 */
+            right: 10px;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .import-btn:hover {
+            background-color: #1976D2;
+        }
         .input-bubble {
             background-color: #e6ffe6;
             border-radius: 10px;
@@ -181,6 +197,9 @@
 <div id="app" v-cloak>
     <span class="username-display" v-if="isLoggedIn">{{ username }}</span>
     <button class="login-btn" @click="showModal = true">登录</button>
+    <!-- 新增导入知识按钮 -->
+    <button class="import-btn" @click="fileInput.click()">导入知识</button>
+    <input type="file" ref="fileInput" style="display: none;" @change="importKnowledge" accept=".pdf">
     <!-- 登录对话框 -->
     <div class="modal" v-if="showModal">
         <div class="modal-content">
@@ -216,6 +235,7 @@
             const username = ref('');
             const password = ref('');
             const isLoggedIn = ref(false);
+            const fileInput = ref(null);
 
             const sendMessage = () => {
                 console.log('sendMessage 函数被调用');
@@ -247,6 +267,26 @@
                 } catch (error) {
                     console.error('登录请求出错:', error);
                     alert('登录请求出错，请稍后重试');
+                }
+            };
+
+            const importKnowledge = async () => {
+                const file = fileInput.value.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('pdf_file', file);
+                    try {
+                        const response = await axios.post('http://127.0.0.1:8000/import_pdf', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        });
+                        console.log(response.data);
+                        alert('文件上传成功');
+                    } catch (error) {
+                        console.error('文件上传出错:', error);
+                        alert('文件上传出错，请稍后重试');
+                    }
                 }
             };
 
@@ -284,7 +324,9 @@
                 username,
                 password,
                 login,
-                isLoggedIn
+                isLoggedIn,
+                fileInput,
+                importKnowledge
             }
         }
     })

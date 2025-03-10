@@ -41,38 +41,23 @@
             top: 10px;
             right: 10px;
             padding: 10px 20px;
-            background-color: #4CAF50; /* 设置背景颜色 */
-            color: white; /* 文字颜色 */
-            border: none;
-            cursor: pointer;
-            border-radius: 5px; /* 圆角边框 */
-            font-size: 16px; /* 字体大小 */
-        }
-        .login-btn:hover {
-            background-color: #45a049;
-        }
-        .knowledge-import-btn {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 10px 20px;
-            background-color: #f44336; /* 设置不同的背景颜色 */
+            background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 5px;
             font-size: 16px;
         }
-        .knowledge-import-btn:hover {
-            background-color: #e53935;
+        .login-btn:hover {
+            background-color: #45a049;
         }
         .input-bubble {
-            background-color: #e6ffe6; /* 淡绿色背景 */
+            background-color: #e6ffe6;
             border-radius: 10px;
             padding: 20px;
             margin-top: 10px;
-            width: 500px; /* 根据需要调整宽度 */
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 500px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
             display: flex;
             align-items: center;
@@ -109,41 +94,94 @@
             background-color: #e53935;
         }
         .title-text {
-            font-weight: bold; /* 加粗文字 */
-            color: #333; /* 设置文字颜色 */
-            margin-bottom: 40px; /* 增加上边距 */
-            text-align: center; /* 文字居中对齐 */
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 40px;
+            text-align: center;
         }
-        /* 修改后的输出对话框样式 */
         .chat-bubble {
-            background-color: #d9f2ff; /* 改为此颜色 */
+            background-color: #d9f2ff;
             border-radius: 10px;
             padding: 20px;
             margin-top: 10px;
-            width: 500px; /* 根据需要调整宽度 */
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 500px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
-            max-height: 200px; /* 设置最大高度 */
-            overflow-y: auto; /* 当内容超出容器时显示垂直滚动条 */
+            max-height: 200px;
+            overflow-y: auto;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        /* 可选：自定义滚动条样式 */
-        .chat-bubble::-webkit-scrollbar {
-            width: 8px; /* 滚动条宽度 */
+        .modal {
+            display: block; /* 确保模态框默认显示 */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
         }
-        .chat-bubble::-webkit-scrollbar-thumb {
-            background-color: #888; /* 滚动条颜色 */
-            border-radius: 4px; /* 圆角程度 */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 10px;
+            text-align: center;
+            display: flex; /* 添加flex布局 */
+            flex-direction: column; /* 设置垂直排列 */
+            align-items: center; /* 水平居中 */
         }
-        .chat-bubble::-webkit-scrollbar-thumb:hover {
-            background-color: #555; /* 鼠标悬停时滚动条颜色 */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content input {
+            width: 60%; /* 修改宽度为 60% */
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px; /* 添加顶部外边距 */
+        }
+        .modal-content button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
 <div id="app" v-cloak>
+    <button class="login-btn" @click="showModal = true">登录</button>
+    <!-- 登录对话框 -->
+    <div class="modal" v-if="showModal">
+        <div class="modal-content">
+            <span class="close" @click="showModal = false">&times;</span>
+            <h2>登录</h2>
+            <input type="text" v-model="username" placeholder="用户名" />
+            <input type="password" v-model="password" placeholder="密码" />
+            <button @click="login">登录</button>
+        </div>
+    </div>
     <div class="content-container">
         <div class="title-text">大模型的智能检索问答的频谱知识管理系统</div>
         <img src="https://tse2-mm.cn.bing.net/th/id/OIP-C.kwe67ZMuwckeP13CfQ2cbAAAAA?rs=1&pid=ImgDetMain" alt="描述图片"/>
@@ -162,11 +200,15 @@
     const { createApp, ref, onMounted, onUnmounted } = Vue;
     const app = createApp({
         setup() {
+            const showModal = ref(false);
             let socket;
             const inputValue = ref('');
             const outputMessage = ref('');
+            const username = ref('');
+            const password = ref('');
 
             const sendMessage = () => {
+                console.log('sendMessage 函数被调用');
                 if (socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify({mes: inputValue.value}));
                     inputValue.value = ''; // 清空输入框
@@ -176,6 +218,11 @@
             const clearInput = () => {
                 inputValue.value = '';
                 outputMessage.value = '';
+            };
+
+            const login = () => {
+                console.log('login 函数被调用，用户名: ', username.value, ' 密码: ', password.value);
+                // 这里可以添加登录逻辑
             };
 
             onMounted(() => {
@@ -204,10 +251,14 @@
             });
 
             return {
+                showModal,
                 inputValue,
                 outputMessage,
                 sendMessage,
-                clearInput
+                clearInput,
+                username,
+                password,
+                login
             }
         }
     })

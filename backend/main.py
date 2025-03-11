@@ -3,10 +3,12 @@
 启动命令：uvicorn main:app --reload
 '''
 
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.websockets import WebSocket
 
+from backend.utils_func import get_conn_cursor
 from backend.workflow.graph_engine import WorkFlow
 
 app = FastAPI()
@@ -35,7 +37,41 @@ async def chat(message: Message = Body(...)):
     response = work_flow.run(input_data)
     return {"response": response['judgement_chat']['messages']}
 
+@app.websocket("/chat")
+async def chat(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            # 等待接收客户端消息
+            data = await websocket.receive_text()
 
+            # 假设传入的消息可以直接作为Message模型解析
+            message = Message(mes=data)
+
+            work_flow = WorkFlow()
+            input_data = {'messages': message.mes}
+            response = work_flow.run(input_data)
+
+            # 发送响应给客户端
+            await websocket.send_json({"response": response['judgement_chat']['messages']})
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
+# 新增登录验证的请求模型
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# 新增登录验证接口
+@app.post("/login")
+async def login(login_request: LoginRequest = Body(...)):
+    c=get_conn_cursor()
+    c.execute("SELECT * FROM users WHERE username =? AND password =?", (login_request.username, login_request.password))
+    user = c.fetchone()
+    if user:
+        return {"message": "登录成功", "success": True}
+    else:
+        return {"message": "用户名或密码错误", "success": False}
 
 if __name__ == '__main__':
     import uvicorn

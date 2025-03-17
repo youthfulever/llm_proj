@@ -1,5 +1,11 @@
 <template>
   <div class="chat-app">
+    <!-- 左上角用户头像 -->
+    <div class="user-avatar" @click="goToLogin">
+      <img src="@/assets/logo.png" alt="用户头像" />
+      <span v-if="isAuthenticated">已登录</span>
+      <span v-else>请登录</span>
+    </div>
     <!-- 左侧对话列表 -->
     <div class="sidebar">
       <button class="new-conversation" @click="newConversation">➕ 新建对话</button>
@@ -55,6 +61,13 @@ export default {
       });
       return messages;
     },
+    isAuthenticated() {
+      return localStorage.getItem("token") !== null;
+    }
+  },
+  setup() {
+    const router = useRouter();
+    return { router };
   },
   mounted() {
     // localStorage.clearLocalStorage()
@@ -70,6 +83,9 @@ export default {
   },
 
   methods: {
+    goToLogin() {
+      this.router.push("/login"); // 跳转到登录页面
+    },
     handleBeforeUnload() {
       if(this.currentConversationId){
         this.syncConversation(this.currentConversationId);
@@ -358,5 +374,35 @@ export default {
 }
 .katex {
   font-size: 1.2em;
+}
+/* 用户头像样式 */
+.user-avatar {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+}
+
+.user-avatar:hover {
+  background: #f0f0f0;
+}
+
+.user-avatar img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.user-avatar span {
+  font-size: 14px;
+  color: #333;
 }
 </style>

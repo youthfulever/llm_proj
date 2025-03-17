@@ -70,7 +70,7 @@ export default {
   },
 
   methods: {
-    handleBeforeUnload(event) {
+    handleBeforeUnload() {
       if(this.currentConversationId){
         this.syncConversation(this.currentConversationId);
       }
@@ -103,7 +103,7 @@ export default {
         }else {
           this.newConversation();
         }
-
+        this.saveConversations();
       }catch(error){
         console.error("请求失败", error);
       } 
@@ -112,14 +112,20 @@ export default {
       if (!this.conversations[conversationId]) return; 
       const conversation = this.conversations[conversationId]; 
       try{
-        await axios.post("http://127.0.0.1:8000/updata_conversation ",{
+        const response = await axios.post("http://127.0.0.1:8000/update_conversation ",{
           conversation_id: conversationId,
+          conversation_name: conversation.conversation_name,
+          talk_id: conversation.talk_id,  
           sender_message: conversation.sender_message,
           robert_message: conversation.robert_message,
-          conversation_name: conversation.conversation_name,    
-        });
+
+             
+        }, {
+        headers: { "Content-Type": "application/json" }
+      });
+        console.log(response.data);
       }catch(error){  
-        console.error("请求失败", error);
+        console.error("对话同步失败", error);
       } 
 
     },

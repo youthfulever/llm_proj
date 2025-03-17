@@ -38,13 +38,15 @@ def init_chat_db():
     conn = sqlite3.connect("./db/chat.db")
     cursor = conn.cursor()
 
-    # 创建 conversations 表
+    # 创建 conversations 表，新增 talk_id 字段
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS conversations (
-            conversation_id TEXT PRIMARY KEY,  -- 用 Date.now().toString() 作为唯一标识
-            conversation_name TEXT NOT NULL,  -- 方便用户查看的对话名称
-            sender_message TEXT NOT NULL,     -- 用户发送的消息
-            robot_message TEXT NOT NULL       -- 机器人返回的消息
+            conversation_id TEXT NOT NULL,
+            conversation_name TEXT NOT NULL,
+            talk_id INTEGER NOT NULL,
+            sender_message TEXT NOT NULL,
+            robot_message TEXT NOT NULL,
+            PRIMARY KEY (conversation_id, talk_id)  -- 组合主键，确保同一会话的 talk_id 唯一
         )
     ''')
 
@@ -54,24 +56,15 @@ def init_chat_db():
 
     if count == 0:
         # 插入一条默认的对话数据
-        cursor.execute('''
-            INSERT INTO conversations (conversation_id, conversation_name, sender_message, robot_message)
-            VALUES (?, ?, ?, ?)
-        ''', (
-            "1710241234567",  # 示例 conversation_id
-            "示例对话",
-            "你好",  # 以 "||" 作为分隔符
-            "你好，我是一个 AI 助手"  # 机器人回复
-        ))
-        cursor.execute('''
-            INSERT INTO conversations (conversation_id, conversation_name, sender_message, robot_message)
-            VALUES (?, ?, ?, ?)
-        ''', (
-            "1710241234600",  # 示例 conversation_id
-            "示例对话1",
-            "你好",  # 以 "||" 作为分隔符
-            "你好，我是一个 AI 助手"  # 机器人回复
-        ))
+        cursor.executemany('''
+            INSERT INTO conversations (conversation_id, conversation_name, talk_id, sender_message, robot_message)
+            VALUES (?, ?, ?, ?, ?)
+        ''', [
+            ("1710241234567", "示例对话", 0, "你好", "请不要闲聊"),
+            ("1710241234567", "示例对话", 1, "你好啊", "请不要闲聊，这是频谱知识助手！"),
+            ("1710241234600", "示例对话1", 0, "你好", "你好，我是一个 AI 助手"),
+            ("1710241234600", "示例对话1", 1, "你能做什么？", "我可以回答你的问题！")
+        ])
         print("✅ 初始对话数据已插入")
 
     # 提交 & 关闭数据库

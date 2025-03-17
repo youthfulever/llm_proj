@@ -38,6 +38,7 @@
 <script>
 import axios from "axios";
 import katex from "katex";
+import { useRouter } from "vue-router";
 import "katex/dist/katex.min.css";
 
 export default {
@@ -67,7 +68,11 @@ export default {
   },
   setup() {
     const router = useRouter();
-    return { router };
+    return { router, goToLogin };
+    
+    function goToLogin() {
+      router.push("/login"); // Vue Router 页面跳转
+    }
   },
   mounted() {
     // localStorage.clearLocalStorage()
@@ -83,9 +88,7 @@ export default {
   },
 
   methods: {
-    goToLogin() {
-      this.router.push("/login"); // 跳转到登录页面
-    },
+    
     handleBeforeUnload() {
       if(this.currentConversationId){
         this.syncConversation(this.currentConversationId);

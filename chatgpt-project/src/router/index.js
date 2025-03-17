@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Login from "@/components/Login.vue"; 
+import LoginPage from "@/components/LoginPage.vue"; 
 import ChatWindows from "@/components/ChatWindows.vue"; 
 
 const routes = [
   { path: "/", redirect: "/login" },
-  { path: "/login", component: Login },
+  { path: "/login", component: LoginPage },
   { path: "/chat", component: ChatWindows, meta: { requiresAuth: true } }
 ];
 

@@ -7,7 +7,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from backend.example_prompt import CHAT_JUDGMENT
+from backend.example_prompt import CHAT_JUDGMENT, HALLUCINATION_JUDGMENT, QUERY_REWRITE
 from backend.model import my_llm, get_vectors, MyEmbeddings
 from fastapi import Body
 from pydantic import BaseModel
@@ -205,7 +205,19 @@ def rag_service(query):
 
     return results
 
+def judgment_hallucination(user_query,answer):
+    prompt = ChatPromptTemplate.from_template(HALLUCINATION_JUDGMENT)
+    # 创建链
+    chain = prompt | my_llm
+    res = chain.invoke({"query": user_query,"answer":answer}).content
+    return res
 
+def query_rewrite(user_query):
+    prompt = ChatPromptTemplate.from_template(QUERY_REWRITE)
+    # 创建链
+    chain = prompt | my_llm
+    res = chain.invoke({"query": user_query}).content
+    return res
 
 
 

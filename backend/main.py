@@ -11,6 +11,8 @@ from starlette.websockets import WebSocket
 from backend.utils_func import get_conn_cursor, get_db_connection, insert_knowledge
 from backend.workflow.graph_engine import WorkFlow
 from fastapi import File, UploadFile
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -181,8 +183,16 @@ async def update_conversation(history_message: History_Message = Body(...)):
 #         return {"message": "用户名或密码错误", "success": False}
 
 # 新增导入 PDF 文件的接口
+import os
+
+MAX_FILE_SIZE = 1024 * 1024 * 20  # 10MB
+
 @app.post("/import_pdf")
 async def import_pdf(pdf_file: UploadFile = File(...)):
+    if pdf_file.content_type != 'application/pdf':
+        return {"message": "只允许上传 PDF 文件"}
+    if os.fstat((await pdf_file.read()).fileno()).st_size > MAX_FILE_SIZE:
+        return {"message": "文件大小不能超过 10MB"}
     try:
         # 保存文件到本地临时位置
         with open(f'./data/{pdf_file.filename}', "wb") as f:
@@ -194,6 +204,13 @@ async def import_pdf(pdf_file: UploadFile = File(...)):
     except Exception as e:
         print(f"文件上传出错: {e}")
         return {"message": "文件上传出错，请稍后重试"}
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"message": "服务器内部错误，请稍后重试"}
+    )
 
 if __name__ == '__main__':
     import uvicorn

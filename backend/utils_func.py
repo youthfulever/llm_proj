@@ -27,13 +27,89 @@ def init_db():
     if c.fetchone()[0] == 0:
         c.execute("INSERT INTO users (username, password) VALUES ('zhangsan', '123456')")
         conn.commit()
-    return conn
+    conn.close()
+    print("✅ 用户数据库初始化完成！")
+    # return conn
+
+
+# 初始化聊天数据库
+def init_chat_db():
+    # 连接数据库
+    conn = sqlite3.connect("./db/chat.db")
+    cursor = conn.cursor()
+
+    # 创建 conversations 表，新增 talk_id 字段
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS conversations (
+            conversation_id TEXT NOT NULL,
+            conversation_name TEXT NOT NULL,
+            talk_id INTEGER NOT NULL,
+            sender_message TEXT NOT NULL,
+            robot_message TEXT NOT NULL,
+            PRIMARY KEY (conversation_id, talk_id)  -- 组合主键，确保同一会话的 talk_id 唯一
+        )
+    ''')
+
+    # 检查是否已经有数据，避免重复插入
+    cursor.execute("SELECT COUNT(*) FROM conversations")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        # 插入一条默认的对话数据
+        cursor.executemany('''
+            INSERT INTO conversations (conversation_id, conversation_name, talk_id, sender_message, robot_message)
+            VALUES (?, ?, ?, ?, ?)
+        ''', [
+            ("1710241234567", "示例对话", 0, "你好", "请不要闲聊"),
+            ("1710241234567", "示例对话", 1, "你好啊", "请不要闲聊，这是频谱知识助手！"),
+            ("1710241234600", "示例对话1", 0, "你好", "你好，我是一个 AI 助手"),
+            ("1710241234600", "示例对话1", 1, "你能做什么？", "我可以回答你的问题！")
+        ])
+        print("✅ 初始对话数据已插入")
+
+    # 提交 & 关闭数据库
+    conn.commit()
+    conn.close()
+    print("✅ 数据库表 conversations 创建完成！")
+
+
+
+def test1():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # 查询所有对话记录
+    cursor.execute("SELECT conversation_id, sender_message, robot_message, conversation_name FROM conversations")
+    rows = cursor.fetchall()
+    conn.close()
+
+    # 处理数据，转换为前端需要的格式
+    conversations = {}
+    for row in rows:
+        conversation_id = row["conversation_id"]
+        sender_messages = row["sender_message"].split("||") if row["sender_message"] else []
+        robot_messages = row["robot_message"].split("||") if row["robot_message"] else []
+        talk_ids = list(range(len(sender_messages)))  # 生成 [0, 1, 2, ...] 的序列
+
+        conversations[conversation_id] = {
+            "sender_message": sender_messages,
+            "robert_message": robot_messages,
+            "talk_id": talk_ids,
+            "conversation_name": row["conversation_name"]
+        }
+    print((conversations))
+    return conversations
+
 
 def get_conn_cursor():
     conn = sqlite3.connect('./db/users.db')
     c = conn.cursor()
     return c
 
+# 获取数据库连接
+def get_db_connection():
+    conn = sqlite3.connect('./db/chat.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 # 调用数据库初始化函数
 # conn = init_db()
 
@@ -134,7 +210,9 @@ def rag_service(query):
 
 
 if __name__ == "__main__":
-    init_db()
+    # init_db()
+    init_chat_db()
+    test1()
     # insert_knowledge("./data/test.pdf")
     # print(rag_service('频段占用度判决门限是什么'))
     # insert_qa("频谱划分规定的网站去哪里查看？",

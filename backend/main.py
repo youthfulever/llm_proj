@@ -8,8 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.websockets import WebSocket
 
-from backend.utils_func import get_conn_cursor, get_db_connection
+from backend.utils_func import get_conn_cursor, get_db_connection, insert_knowledge
 from backend.workflow.graph_engine import WorkFlow
+from fastapi import File, UploadFile
 
 app = FastAPI()
 
@@ -178,6 +179,21 @@ async def update_conversation(history_message: History_Message = Body(...)):
 #         return {"message": "登录成功", "success": True}
 #     else:
 #         return {"message": "用户名或密码错误", "success": False}
+
+# 新增导入 PDF 文件的接口
+@app.post("/import_pdf")
+async def import_pdf(pdf_file: UploadFile = File(...)):
+    try:
+        # 保存文件到本地临时位置
+        with open(f'./data/{pdf_file.filename}', "wb") as f:
+            contents = await pdf_file.read()
+            f.write(contents)
+        # 调用 insert_knowledge 函数
+        insert_knowledge(f'./data/{pdf_file.filename}')
+        return {"message": "文件上传并处理成功"}
+    except Exception as e:
+        print(f"文件上传出错: {e}")
+        return {"message": "文件上传出错，请稍后重试"}
 
 if __name__ == '__main__':
     import uvicorn
